@@ -1,0 +1,201 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Шарики на карандашах</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="page">
+    <!-- Header -->
+    <header class="top">
+      <div class="top-left">
+        <h1 class="title">Шарики на карандашах</h1>
+      </div>
+      <div class="top-right">
+        <button id="btnServerConfig" class="button secondary" style="font-size:12px; padding:6px 10px;" title="Настроить адрес игрового сервера">⚙ Сервер</button>
+        <button id="btnOpenAdmin" class="button secondary" style="font-size:12px; padding:6px 10px;" title="Панель организатора">Админ</button>
+      </div>
+    </header>
+
+    <!-- Global Auto-start Countdown Banner -->
+    <div id="toastBanner" class="toast-banner hidden"></div>
+
+    <!-- Screen 1: Lobby View -->
+    <div id="lobbyView">
+      <div class="lobby-grid">
+        <!-- Left: Profile & Stats Customization -->
+        <div class="card profile-card">
+          <div class="section-head">
+            <h2 class="section-title">1. Боец</h2>
+          </div>
+
+          <div class="form-group">
+            <label for="inputName">Имя:</label>
+            <input type="text" id="inputName" class="input-text" maxlength="20" placeholder="Ваш ник" autocomplete="off">
+          </div>
+
+          <!-- Stats Allocation -->
+          <div class="stats-box">
+            <div class="stats-title-row">
+              <span>Характеристики:</span>
+              <span>Очков: <strong id="pointsLeft" style="color:var(--red);">0</strong></span>
+            </div>
+
+            <!-- Strength -->
+            <div class="stat-row">
+              <div class="stat-meta">
+                <b>Сила (STR)</b>
+                <span id="descStr" class="stat-desc">HP, размер, отброс</span>
+              </div>
+              <div class="stat-controls">
+                <button type="button" id="btnStrMinus" class="btn-step">−</button>
+                <span id="statStr" class="stat-value">4</span>
+                <button type="button" id="btnStrPlus" class="btn-step">+</button>
+              </div>
+            </div>
+
+            <!-- Agility -->
+            <div class="stat-row">
+              <div class="stat-meta">
+                <b>Ловкость (AGI)</b>
+                <span id="descAgi" class="stat-desc">Скорость, темп атак, рывки</span>
+              </div>
+              <div class="stat-controls">
+                <button type="button" id="btnAgiMinus" class="btn-step">−</button>
+                <span id="statAgi" class="stat-value">4</span>
+                <button type="button" id="btnAgiPlus" class="btn-step">+</button>
+              </div>
+            </div>
+
+            <!-- Intelligence -->
+            <div class="stat-row">
+              <div class="stat-meta">
+                <b>Интеллект (INT)</b>
+                <span id="descInt" class="stat-desc">Заряд ульты, спецприёмы, зона</span>
+              </div>
+              <div class="stat-controls">
+                <button type="button" id="btnIntMinus" class="btn-step">−</button>
+                <span id="statInt" class="stat-value">4</span>
+                <button type="button" id="btnIntPlus" class="btn-step">+</button>
+              </div>
+            </div>
+
+            <div class="presets">
+              <span style="font-size:11px; color:#888; align-self:center;">Пресеты:</span>
+              <button type="button" class="btn-preset" data-preset="4,4,4">Баланс</button>
+              <button type="button" class="btn-preset" data-preset="8,2,2">Танк</button>
+              <button type="button" class="btn-preset" data-preset="2,8,2">Ловкач</button>
+              <button type="button" class="btn-preset" data-preset="2,2,8">Маг</button>
+            </div>
+          </div>
+
+          <button id="btnReady" class="button" style="font-size:16px; padding:12px; margin-top:14px; width:100%;">⚔ ГОТОВ</button>
+        </div>
+
+        <!-- Right: Role Selection Grid -->
+        <div class="card">
+          <div class="section-head">
+            <h2 class="section-title">2. Роль</h2>
+            <div class="race-legend" style="font-size:11px; color:#666;">
+              <span>🛡️ Титаны</span> · 
+              <span>⚡ Тени</span> · 
+              <span>🔮 Мистики</span>
+            </div>
+          </div>
+          <div id="rolesContainer" class="roles-grid">
+            <!-- Dynamically populated roles -->
+          </div>
+        </div>
+      </div>
+
+      <!-- Connected Players Roster -->
+      <div class="card roster-card">
+        <div class="section-head">
+          <h2 class="section-title">Игроки</h2>
+          <span class="stat-chip" id="lobbyCount">0 / 15</span>
+        </div>
+        <div id="rosterList" class="roster-list">
+          <!-- Dynamically populated roster items -->
+        </div>
+      </div>
+    </div>
+
+    <!-- Screen 2: Arena View -->
+    <div id="arenaView" class="arena-view">
+      <div class="arena-head">
+        <div id="roundBadge" class="round-badge">Раунд 1</div>
+        <div class="stats">
+          <div class="stat-chip">◷ Время раунда <strong id="timer">1:00</strong></div>
+          <div class="stat-chip">☺ В строю <strong id="alive">—</strong></div>
+        </div>
+      </div>
+
+      <div class="arena-container">
+        <canvas id="canvas" width="1000" height="645"></canvas>
+      </div>
+    </div>
+
+    <!-- Dynamic Overlay (Countdown / Intermission / Game Over / Kicked) -->
+    <div class="overlay hidden" id="overlay">
+      <div class="overlay-box" id="overlayBox">
+        <!-- Injected via client.js -->
+      </div>
+    </div>
+  </div>
+
+  <!-- Admin Modal -->
+  <div id="adminModal" class="modal-bg hidden">
+    <div class="admin-panel-box">
+      <div class="section-head">
+        <h3 style="margin:0; font-size:20px;">Панель Организатора</h3>
+        <button type="button" id="btnCloseAdmin" class="btn-step">✕</button>
+      </div>
+
+      <!-- Login Form (no placeholders!) -->
+      <form id="adminLoginForm" style="margin-top:14px;" onsubmit="return false;">
+        <p style="font-size:13px; color:#666; margin-top:0;">Введите логин и пароль администратора:</p>
+        <div class="form-group" style="margin-bottom:8px;">
+          <label for="adminUser">Логин:</label>
+          <input type="text" id="adminUser" class="input-text" autocomplete="username">
+        </div>
+        <div class="form-group" style="margin-bottom:12px;">
+          <label for="adminPass">Пароль:</label>
+          <input type="password" id="adminPass" class="input-text" autocomplete="current-password">
+        </div>
+        <button type="submit" id="btnAdminLogin" class="button" style="width:100%;">Войти как Админ</button>
+      </form>
+
+      <!-- Authenticated Controls -->
+      <div id="adminControls" class="admin-actions hidden">
+        <hr style="border:0; border-top:1px dashed #ccc; margin:8px 0;">
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+          <b style="color:#216933; font-size:14px;">★ Вы вошли как Организатор</b>
+          <button type="button" id="btnAdminLogout" class="btn-preset" style="color:#999;">Выйти</button>
+        </div>
+
+        <button type="button" id="btnAdminStart" class="button" style="font-size:15px; padding:12px;">▶ Запустить битву сейчас</button>
+        <button type="button" id="btnAdminReset" class="button danger" style="font-size:14px; padding:10px;">↺ Сбросить лобби (вернуть всех)</button>
+
+        <div style="background:#f7f6ed; border:1px solid #d5cebe; border-radius:6px; padding:10px; margin-top:4px;">
+          <label style="font-size:12px; font-weight:bold; display:block; margin-bottom:4px;">Длительность раунда (сек):</label>
+          <div style="display:flex; gap:8px;">
+            <input type="number" id="adminDuration" class="input-text" style="width:90px; padding:6px 8px;" value="60" min="15" max="180">
+            <button type="button" id="btnAdminSetDuration" class="button secondary" style="padding:6px 14px; font-size:13px;">Сохранить</button>
+          </div>
+        </div>
+
+        <div style="margin-top:6px;">
+          <label style="font-size:13px; font-weight:bold; color:#4a4450;">Игроки в комнате (Кик нежелательных):</label>
+          <div id="adminPlayerList" class="admin-player-list">
+            <!-- Populated by client.js -->
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="client.js"></script>
+</body>
+</html>

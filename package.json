@@ -1,0 +1,16 @@
+{
+  "name": "pencil-battle-royale",
+  "version": "1.0.0",
+  "description": "Многопользовательский автобой на карандашах для определения проигравшего",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "keywords": ["game", "canvas", "multiplayer", "pencil", "tournament"],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "express": "^4.21.2",
+    "ws": "^8.18.0"
+  }
+}
