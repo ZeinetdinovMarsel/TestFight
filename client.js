@@ -453,15 +453,15 @@
     // Real dynamic stat descriptions showing actual in-game values
     const descStr = $('descStr');
     if (descStr) {
-      descStr.textContent = `HP: ${130 + myStats.str * 18} · Размер: ${85 + myStats.str * 5}% · Ульта от полученного урона: +${myStats.str * 6}%`;
+      descStr.textContent = `HP: ${130 + myStats.str * 20} · Стойкость к толчкам · Ярость ульты: +${myStats.str * 7}% (Контрит ассасинов)`;
     }
     const descAgi = $('descAgi');
     if (descAgi) {
-      descAgi.textContent = `Бег: ${82 + Math.round(myStats.agi * 5.5)}% · Темп: +${Math.round(myStats.agi * 6.5)}% · Ульта от атак: +${myStats.agi * 5}%`;
+      descAgi.textContent = `Бег: +${Math.round(myStats.agi * 6)}% · Темп: +${Math.round(myStats.agi * 7.5)}% · Уворот: ${Math.round(myStats.agi * 3.5)}% (Контрит магов)`;
     }
     const descInt = $('descInt');
     if (descInt) {
-      descInt.textContent = `Мастерство ульты: +${myStats.int * 10}% · Спецприём: ${myStats.int >= 6 ? 'каждые 3 удара' : 'каждые 4 удара'} · Зона: +${myStats.int * 5}%`;
+      descInt.textContent = `Спецприём: ${myStats.int >= 5 ? 'каждые 3 удара' : 'каждые 4 удара'} · Зоны: +${myStats.int * 5}% · Магия: +${Math.round(myStats.int * 4.5)}% (Контрит танков)`;
     }
 
     $('btnStrPlus').disabled = remaining <= 0 || myStats.str >= 10;
@@ -1110,6 +1110,27 @@
         ctx.globalAlpha = 0.85;
         objectLine([[-9, 0], [9, 0]], z.color);
         objectLine([[0, -9], [0, 9]], z.color);
+      } else if (z.kind === 'barricade') {
+        ctx.globalAlpha = 0.9;
+        ctx.fillStyle = '#cfb078';
+        ctx.fillRect(-28, -6, 56, 12);
+        ctx.strokeStyle = '#6e5430';
+        ctx.lineWidth = 1.5;
+        ctx.strokeRect(-28, -6, 56, 12);
+        for (let rx = -24; rx <= 24; rx += 8) {
+          objectLine([[rx, -6], [rx, 0]], '#5a4527', 1.2);
+        }
+      } else if (z.kind === 'summon_bee') {
+        ctx.globalAlpha = 0.95;
+        objectOval(0, 0, 9, 6, '#e5b634');
+        objectLine([[0, -6], [0, 6]], '#3d3023', 2);
+        objectLine([[-4, -5], [-4, 5]], '#3d3023', 2);
+        ctx.fillStyle = '#ebf6f7';
+        ctx.beginPath();
+        ctx.ellipse(-2, -7, 6, 3, -0.3, 0, Math.PI * 2);
+        ctx.ellipse(-2, 7, 6, 3, 0.3, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
       }
       ctx.restore();
     }

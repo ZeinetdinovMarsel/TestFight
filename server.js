@@ -1,5 +1,6 @@
 const http = require('http');
 const path = require('path');
+const os = require('os');
 const express = require('express');
 const { WebSocketServer } = require('ws');
 
@@ -15,92 +16,92 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 // 15 unique, witty pencil-and-paper roles matching original animations
 const ROLES = [
-  // --- 🛡️ ТИТАНЫ (Тяжеловесы, броня, сокрушают Теней) ---
+  // --- 🛡️ ТИТАНЫ (Тяжеловесы, вампиризм, хуки, ярость, сокрушают Теней) ---
   {
     id: 0,
     race: 'titan',
     raceName: 'Титан',
     raceIcon: '🛡️',
-    roleName: 'Канцелярский Паладин',
-    weaponName: 'Рыцарь-ластик',
+    roleName: 'Вампир-Ластик',
+    weaponName: 'Кровавый ластик',
     kind: 'sword',
     color: '#c33c70',
-    range: 85, cd: 0.85, damage: 8.5, speed: 96,
-    skill1: { name: 'Стирание', desc: 'Стирает снаряды врага и даёт блок.' },
-    skill2: { name: 'Щит графита', desc: 'При HP < 30% даёт щит +20 HP.' },
-    ult: { name: 'Генеральная зачистка', desc: 'Круговой взмах сносит врагов, лечит 20 HP и счищает снаряды.' }
+    range: 85, cd: 0.88, damage: 6.2, speed: 95,
+    skill1: { name: 'Вампиризм', desc: 'Каждый удар высасывает 10% урона в своё здоровье.' },
+    skill2: { name: 'Стирание крови', desc: 'При HP < 35% даёт щит +10 HP и стирает чужие снаряды.' },
+    ult: { name: 'Кровавая жатва', desc: 'Вихрь вытягивает здоровье у всех вокруг, нанося урон и восстанавливая вампиру до 20 HP.' }
   },
   {
     id: 1,
     race: 'titan',
     raceName: 'Титан',
     raceIcon: '🛡️',
-    roleName: 'Магнитный Барон',
-    weaponName: 'Капитан магнит',
+    roleName: 'Магнитный Мясник',
+    weaponName: 'Мясницкий магнит',
     kind: 'axe',
     color: '#d45132',
-    range: 110, cd: 1.05, damage: 9.8, speed: 94,
-    skill1: { name: 'Притяжение', desc: 'Стягивает врагов в зону удара.' },
-    skill2: { name: 'Смена полюсов', desc: '3-й удар отбрасывает цель сильной волной.' },
-    ult: { name: 'Магнитный шторм', desc: 'Стягивает соперников в центр и наносит сокрушительный удар.' }
+    range: 110, cd: 0.98, damage: 10.8, speed: 96,
+    skill1: { name: 'Железный Хук', desc: 'Выбрасывает трос: притягивает врага в упор и станит на 0.5с.' },
+    skill2: { name: 'Тяжелый тесак', desc: 'Удар в упор отбрасывает цель с +45% бонусного урона.' },
+    ult: { name: 'Магнитный шторм', desc: 'Стягивает ВСЕХ врагов с арены к себе в ловушку и сокрушает топором.' }
   },
   {
     id: 5,
     race: 'titan',
     raceName: 'Титан',
     raceIcon: '🛡️',
-    roleName: 'Пружинный Вандал',
-    weaponName: 'Пружинный сапог',
+    roleName: 'Пружинный Берсерк',
+    weaponName: 'Сапог ярости',
     kind: 'hammer',
     color: '#317bc0',
-    range: 98, cd: 1.1, damage: 10.5, speed: 97,
-    skill1: { name: 'Пружинный пинок', desc: 'Прыжок к цели с мощным отбросом.' },
-    skill2: { name: 'Ударная волна', desc: 'Сотрясает лист сейсмической трещиной.' },
-    ult: { name: 'Метеоритный дроп', desc: 'Обрушивается на скопление врагов с радиусом 130.' }
+    range: 98, cd: 1.1, damage: 9.6, speed: 97,
+    skill1: { name: 'Бешеный прыжок', desc: 'Прыгает на врага с воздуха, сотрясая арену землетрясением.' },
+    skill2: { name: 'Кровь берсерка', desc: 'Чем меньше HP, тем выше урон (до +60%) и скорость атаки!' },
+    ult: { name: 'Апокалиптический дроп', desc: 'Сейсмический метеор с радиусом 140 раскидывает всех врагов.' }
   },
   {
     id: 10,
     race: 'titan',
     raceName: 'Титан',
     raceIcon: '🛡️',
-    roleName: 'Пляжный Громила',
-    weaponName: 'Зонтичный краб',
+    roleName: 'Инженер-Строитель',
+    weaponName: 'Зонт-Баррикада',
     kind: 'shield',
     color: '#277c60',
     range: 85, cd: 0.88, damage: 8.5, speed: 95,
-    skill1: { name: 'Раскрытый зонт', desc: 'Блокирует каждый 3-й входящий удар.' },
-    skill2: { name: 'Ответный толчок', desc: 'После блока с силой отталкивает нападающего.' },
-    ult: { name: 'Ураганный купол', desc: 'Купол неуязвимости с уроном по врагам рядом.' }
+    skill1: { name: 'Линейка-Баррикада', desc: 'Ставит деревянную стену, блокирующую врагов и снаряды.' },
+    skill2: { name: 'Отражающий щит', desc: 'Каждый 3-й удар рикошетит снаряды обратно в стрелявших.' },
+    ult: { name: 'Железный Бастион', desc: 'Непробиваемый купол с автоматической пушкой, отстреливающей всех вокруг.' }
   },
   {
     id: 11,
     race: 'titan',
     raceName: 'Титан',
     raceIcon: '🛡️',
-    roleName: 'Чемпион на резинке',
-    weaponName: 'Боксёр на резинке',
+    roleName: 'Стальной Панчер',
+    weaponName: 'Перчатки нокаута',
     kind: 'fist',
     color: '#d33d46',
-    range: 115, cd: 0.86, damage: 9.5, speed: 96,
-    skill1: { name: 'Двойной джеб', desc: 'Два быстрых удара и тяжелый третий апперкот.' },
-    skill2: { name: 'Отдача резинки', desc: 'Тяжелый удар отбрасывает противника и боксёра.' },
-    ult: { name: 'Ураган нокаутов', desc: 'Шквал серийных ударов с мощными нокаутами.' }
+    range: 115, cd: 0.88, damage: 8.2, speed: 96,
+    skill1: { name: 'Оглушающий апперкот', desc: 'Каждый 3-й удар отправляет цель в нокаут (стан на 0.6с).' },
+    skill2: { name: 'Резиновый таран', desc: 'Рывок сквозь поле боя на резинке с сильным отбросом.' },
+    ult: { name: 'Шквал нокаутов', desc: 'Серия из 6 сокрушительных ударов по площади, вырубающих противников.' }
   },
 
-  // --- ⚡ ТЕНИ (Ловкачи, скорость, режут Мистиков) ---
+  // --- ⚡ ТЕНИ (Ловкачи, скорость, блинки, ассасины, режут Мистиков) ---
   {
     id: 6,
     race: 'shadow',
     raceName: 'Тень',
     raceIcon: '⚡',
-    roleName: 'Чернильный Шиноби',
-    weaponName: 'Ниндзя-карандаш',
+    roleName: 'Теневой Шиноби',
+    weaponName: 'Клинок теней',
     kind: 'dagger',
     color: '#7350b8',
-    range: 75, cd: 0.45, damage: 5.5, speed: 114,
-    skill1: { name: 'Штриховка', desc: 'Три молниеносных укола и отскок назад.' },
-    skill2: { name: 'Графитовая пыль', desc: 'Повышенный шанс уклонения от ударов.' },
-    ult: { name: 'Танец грифеля', desc: 'Серия из 3 молниеносных выпадов сквозь цели.' }
+    range: 88, cd: 0.38, damage: 7.8, speed: 120,
+    skill1: { name: 'Теневой шаг (Телепорт)', desc: 'Телепортируется ЗА СПИНУ врага с ударом в спину (+60% урона)!' },
+    skill2: { name: 'Дымовая тень', desc: 'После телепорта оставляет чернильный след, дающий 45% уклонения.' },
+    ult: { name: 'Танец тысячи теней', desc: 'Серия из 4 мгновенных блинков сквозь всех врагов на арене.' }
   },
   {
     id: 7,
@@ -112,23 +113,23 @@ const ROLES = [
     kind: 'trident',
     color: '#d16c21',
     range: 135, cd: 0.82, damage: 8.2, speed: 104,
-    skill1: { name: 'Мёртвая петля', desc: 'Зацеп ниткой и резкий рывок.' },
-    skill2: { name: 'Вокруг света', desc: 'Круговое вращение отталкивает нападающих.' },
-    ult: { name: 'Бесконечный слип', desc: 'Вихрь йо-йо непрерывно режет противников.' }
+    skill1: { name: 'Ниточная петля', desc: 'Опутывает цель нитью йо-йо, связывая её передвижение на 1.2с.' },
+    skill2: { name: 'Орбитальное вращение', desc: 'Круговое вращение катушки отталкивает нападающих.' },
+    ult: { name: 'Бесконечный слип', desc: 'Вихрь йо-йо непрерывно засасывает врагов в режущую зону.' }
   },
   {
     id: 8,
     race: 'shadow',
     raceName: 'Тень',
     raceIcon: '⚡',
-    roleName: 'Курьер из Неаполя',
+    roleName: 'Неаполитанский Курьер',
     weaponName: 'Пицца-бумеранг',
     kind: 'boomerang',
     color: '#b57925',
-    range: 220, cd: 1.15, damage: 6.8, speed: 105,
-    skill1: { name: 'Двойной рез', desc: 'Лезвие пиццы режет врага при броске и возврате.' },
-    skill2: { name: 'Сырный след', desc: 'Ускоренные рывки и маневрирование.' },
-    ult: { name: 'Метровая Пепперони', desc: 'Гигантский слайс пиццы проносится сквозь всё поле боя.' }
+    range: 220, cd: 0.95, damage: 10.2, speed: 107,
+    skill1: { name: 'Двойной срез', desc: 'Бумеранг наносит урон при броске и +50% урона при возврате в спину!' },
+    skill2: { name: 'Сырная смазка', desc: 'Оставляет скользкую дорожку, на которой враги пробуксовывают.' },
+    ult: { name: 'Метровая Пепперони', desc: 'Гигантский слайс пиццы проносится сквозь всё поле боя, отскакивая 4 раза.' }
   },
   {
     id: 12,
@@ -136,13 +137,13 @@ const ROLES = [
     raceName: 'Тень',
     raceIcon: '⚡',
     roleName: 'Острый Кактус',
-    weaponName: 'Кактус-вертушка',
+    weaponName: 'Шипастая вертушка',
     kind: 'saw',
     color: '#4b8b42',
-    range: 78, cd: 0.68, damage: 6.5, speed: 108,
-    skill1: { name: 'Игольчатый вихрь', desc: 'Вращение задевает всех противников вокруг.' },
-    skill2: { name: 'Колючая защита', desc: 'Отражает 22% контактного урона атакующему.' },
-    ult: { name: 'Игольчатая сверхновая', desc: 'Взрыв и залп из 10 колючек во все стороны.' }
+    range: 86, cd: 0.62, damage: 7.2, speed: 108,
+    skill1: { name: 'Игольчатый вихрь', desc: 'Круговое вращение режет всех врагов в контактной зоне.' },
+    skill2: { name: 'Возвратные шипы', desc: 'Отражает 22% входящего контактного урона обратно нападающему!' },
+    ult: { name: 'Игольчатая сверхновая', desc: 'Залп из 12 пробивающих насквозь игл во все стороны арены.' }
   },
   {
     id: 14,
@@ -150,16 +151,16 @@ const ROLES = [
     raceName: 'Тень',
     raceIcon: '⚡',
     roleName: 'Грозовой Дуэлянт',
-    weaponName: 'Клинок-молния',
+    weaponName: 'Клинок-Тесла',
     kind: 'lightning',
     color: '#5268b0',
-    range: 170, cd: 0.95, damage: 8.0, speed: 106,
-    skill1: { name: 'Электро-укол', desc: 'Молниеносный разряд рикошетит во второго врага.' },
-    skill2: { name: 'Грозовая вспышка', desc: 'Резкий выпад с цепным электрошоком.' },
-    ult: { name: 'Шторм Зевса', desc: '4 сокрушительных удара молнии по врагам.' }
+    range: 175, cd: 1.05, damage: 7.1, speed: 106,
+    skill1: { name: 'Шаровая молния', desc: 'Выпускает электрический шар (от него можно увернуться ловкостью).' },
+    skill2: { name: 'Цепной разряд', desc: 'Каждый 3-й удар вызывает взрыв статики на соседних врагов.' },
+    ult: { name: 'Шторм Теслы', desc: '3 прицельных удара молнии с задержкой и визуальным предупреждением на полу.' }
   },
 
-  // --- 🔮 МИСТИКИ (Зонеры, снаряды, ловушки, кайтят Титанов) ---
+  // --- 🔮 МИСТИКИ (Маги, призыватели, ловушки, зоны, кайтят Титанов) ---
   {
     id: 2,
     race: 'mystic',
@@ -169,10 +170,10 @@ const ROLES = [
     weaponName: 'Горошкомёт',
     kind: 'gun',
     color: '#4e9329',
-    range: 290, cd: 1.05, damage: 4.8, speed: 90,
-    skill1: { name: 'Рикошет', desc: 'Горошины отскакивают от полей тетради.' },
-    skill2: { name: 'Веерный выстрел', desc: 'Чередует выстрел с веером из 3 горошин.' },
-    ult: { name: 'Гороховый пулемёт', desc: 'Шквал скорострельных горошин по площади.' }
+    range: 290, cd: 1.08, damage: 4.4, speed: 90,
+    skill1: { name: 'Тетрадный рикошет', desc: 'Горошины отскакивают от полей тетради с +25% урона за каждый отскок.' },
+    skill2: { name: 'Дальний кайт', desc: 'Урон по целям дальше 180 пикселей возрастает на +35%.' },
+    ult: { name: 'Гороховый пулемёт', desc: 'Шквал скорострельных горошин по площади арены.' }
   },
   {
     id: 3,
@@ -180,41 +181,41 @@ const ROLES = [
     raceName: 'Мистик',
     raceIcon: '🔮',
     roleName: 'Киношный Подрывник',
-    weaponName: 'Попкорнщик',
+    weaponName: 'Попкорн-мина',
     kind: 'bomb',
     color: '#ba850d',
-    range: 240, cd: 1.35, damage: 11.5, speed: 92,
-    skill1: { name: 'Масляная мина', desc: 'Оставляет мину, взрывающуюся под ногами.' },
-    skill2: { name: 'Карамельный взрыв', desc: 'Осколочный разрыв зерна при падении.' },
-    ult: { name: 'Ядерный попкорн', desc: '3 гигантских зерна взрывают всю зону.' }
+    range: 240, cd: 1.38, damage: 9.8, speed: 91,
+    skill1: { name: 'Горячая мина', desc: 'Оставляет мину, детонирующую при приближении врага.' },
+    skill2: { name: 'Масляная волна', desc: 'Взрыв оставляет липкое масло, сбивающее бег врагов.' },
+    ult: { name: 'Ядерный попкорн', desc: '3 гигантских зерна взрывают ключевые зоны мощной волной.' }
   },
   {
     id: 4,
     race: 'mystic',
     raceName: 'Мистик',
     raceIcon: '🔮',
-    roleName: 'Токсичный Пчеловод',
-    weaponName: 'Пчеловод',
+    roleName: 'Чернильный Призыватель',
+    weaponName: 'Лук пчеловода',
     kind: 'bow',
     color: '#9e6909',
-    range: 280, cd: 1.02, damage: 6.8, speed: 91,
-    skill1: { name: 'Жалящие пчёлы', desc: 'Самонаводящиеся пчёлы меняют цель при падении врага.' },
-    skill2: { name: 'Тройной рой', desc: 'Каждая 4-я атака выпускает трёх жалящих пчёл.' },
-    ult: { name: 'Гнев Королевы', desc: 'Рой шершней замедляет врагов на 50% и наносит урон.' }
+    range: 270, cd: 1.15, damage: 4.8, speed: 90,
+    skill1: { name: 'Призыв чернильного шмеля', desc: 'Призывает живого летающего шмеля, который атакует и отвлекает врагов.' },
+    skill2: { name: 'Жалящая стрела', desc: 'Выстрел из лука помечает цель, удваивая урон призванных шмелей.' },
+    ult: { name: 'Рой Королевы', desc: 'Призывает 2 свирепых шмелей-стражей, летающих вокруг хозяина.' }
   },
   {
     id: 9,
     race: 'mystic',
     raceName: 'Мистик',
     raceIcon: '🔮',
-    roleName: 'Мыльный Шаман',
-    weaponName: 'Пузыремант',
+    roleName: 'Мыльный Иллюзионист',
+    weaponName: 'Посох пузырей',
     kind: 'magic',
     color: '#008f9b',
-    range: 255, cd: 1.05, damage: 7.8, speed: 92,
-    skill1: { name: 'Вязкая пена', desc: 'Пузыри тормозят и кайтят соперников.' },
-    skill2: { name: 'Мыльная ловушка', desc: 'Оставляет вязкое пятно пены на земле.' },
-    ult: { name: 'Апокалипсис пены', desc: 'Залп из 5 самонаводящихся взрывных пузырей.' }
+    range: 255, cd: 1.1, damage: 7.2, speed: 92,
+    skill1: { name: 'Блуждающий пузырь', desc: 'Запирает врага в левитирующий пузырь на 0.8с (лопается от любого удара).' },
+    skill2: { name: 'Мыльная иллюзия', desc: 'При резкой атаке врага оставляет пузырь-приманку и отскакивает назад.' },
+    ult: { name: 'Мыльный шторм', desc: 'Купол из пузырей, отражающий вражеские снаряды и наносящий брызговый урон.' }
   },
   {
     id: 13,
@@ -222,13 +223,13 @@ const ROLES = [
     raceName: 'Мистик',
     raceIcon: '🔮',
     roleName: 'Карманная Сингулярность',
-    weaponName: 'Карманная дыра',
+    weaponName: 'Чёрная дыра',
     kind: 'dynamite',
     color: '#8b43b1',
-    range: 245, cd: 1.45, damage: 10.8, speed: 90,
-    skill1: { name: 'Грави-ловушка', desc: 'Дыра стягивает противников в одну точку.' },
-    skill2: { name: 'Вакуумный след', desc: 'Затянутые бойцы теряют скорость бега.' },
-    ult: { name: 'Большой Бряк', desc: 'Черная дыра затягивает арену и взрывается.' }
+    range: 245, cd: 1.35, damage: 10.8, speed: 92,
+    skill1: { name: 'Микро-воронка', desc: 'Создает воронку, стягивающую всех врагов в эпицентр.' },
+    skill2: { name: 'Гравитационный импульс', desc: 'В ближнем бою отталкивает нападающих мощной волной.' },
+    ult: { name: 'Коллапс пространства', desc: 'Гигантская сингулярность засасывает арену с финальным взрывом.' }
   }
 ];
 
@@ -393,15 +394,16 @@ function prepareRound(roundNum) {
     const agi = (p.stats && p.stats.agi) || 0;
     const int = (p.stats && p.stats.int) || 0;
 
-    const maxHp = 130 + str * 18;
-    const speedMult = 0.82 + agi * 0.055;
-    const cdMult = 1 / (1 + agi * 0.065);
-    const damageMult = (1 + str * 0.035) * (1 + int * 0.04);
-    const ultRate = 0.8 + int * 0.12;
+    const maxHp = 130 + str * 20; // 0 STR = 130 HP, 10 STR = 330 HP!
+    const speedMult = 0.80 + agi * 0.06; // up to +60% run speed
+    const cdMult = 1 / (1 + agi * 0.075); // up to +75% attack speed
+    const damageMult = (1 + str * 0.04) * (1 + int * 0.045);
+    const ultRate = 0.85 + int * 0.12;
     const scale = 0.85 + str * 0.05; // Visual character scale on canvas
     const radius = 21 * scale;
-    const dodgeCooldown = 3.8 / (1 + agi * 0.1);
-    const dodgeSpeed = 130 + agi * 12;
+    const dodgeCooldown = 3.8 / (1 + agi * 0.12);
+    const dodgeSpeed = 130 + agi * 15;
+    const dodgeChance = agi * 0.035; // up to 35% chance to dodge attacks/spells!
 
     const a = (i * Math.PI * 2) / roundParticipants.length - Math.PI / 2;
     const r = Math.min(235, 120 + roundParticipants.length * 9);
@@ -422,6 +424,7 @@ function prepareRound(roundNum) {
       radius,
       dodgeCooldown,
       dodgeSpeed,
+      dodgeChance,
       x: W / 2 + Math.cos(a) * r,
       y: H / 2 + Math.sin(a) * r,
       vx: rand(-20, 20),
@@ -649,8 +652,9 @@ function updateCombat(dt) {
       }
       if (s.target && s.target.alive) {
         let a = Math.atan2(s.target.y - s.y, s.target.x - s.x);
-        s.vx += (Math.cos(a) * 200 - s.vx) * dt * 3;
-        s.vy += (Math.sin(a) * 200 - s.vy) * dt * 3;
+        // Moderate turn rate: agile opponents can dodge by sidestepping!
+        s.vx += (Math.cos(a) * 200 - s.vx) * dt * 1.3;
+        s.vy += (Math.sin(a) * 200 - s.vy) * dt * 1.3;
       }
     }
 
@@ -677,7 +681,7 @@ function updateCombat(dt) {
       for (const b of fighters) {
         if (b.alive && b !== s.owner && !s.hit.has(b.id) && Math.hypot(b.x - s.x, b.y - s.y) < 25) {
           hit(s.owner, b, s.damage, s.kind === 'boomerang' ? 75 : 45, s.isUlt || false);
-          if (s.kind === 'magic') b.slow = 1.3;
+          if (s.kind === 'magic') b.slow = 0.45;
           s.hit.add(b.id);
           if (s.kind !== 'boomerang') s.t = 0;
           break;
@@ -714,9 +718,24 @@ function updateCombat(dt) {
 function hit(a, b, rawDamage, knock = 100, isUlt = false) {
   if (!a.alive || !b.alive || a === b) return;
 
+  // Agility Dodge Check: agile fighters can dodge incoming non-ult attacks!
+  if (!isUlt && b.dodgeChance && Math.random() < b.dodgeChance) {
+    effects.push({ x: b.x, y: b.y - 18, t: 0.35, max: 0.35, text: '💨 УВОРОТ!', color: '#4ba0d8' });
+    return;
+  }
+
   b.received = (b.received || 0) + 1;
   let shield = b.weapon.kind === 'shield' && b.received % 3 === 0 ? 0.25 : 1;
   let dmg = rawDamage * a.damageMult * shield * (b.guard > 0 ? 0.7 : 1) * rand(0.9, 1.1);
+
+  // Berserker passive: below 50% HP, hammer deals up to +55% bonus damage!
+  if (a.weapon.kind === 'hammer') {
+    if (a.hp < a.maxHp * 0.5) {
+      const fury = 1 + (1 - a.hp / a.maxHp) * 0.55;
+      dmg *= fury;
+      effects.push({ x: a.x, y: a.y - 20, t: 0.35, max: 0.35, text: '🔥 ЯРОСТЬ!', color: '#e64234' });
+    }
+  }
 
   // Race Advantage Logic (Титаны > Тени > Мистики > Титаны)
   const aRace = a.race || (a.weapon && a.weapon.race);
@@ -741,16 +760,23 @@ function hit(a, b, rawDamage, knock = 100, isUlt = false) {
 
   let dx = b.x - a.x, dy = b.y - a.y, l = Math.hypot(dx, dy) || 1;
   // Knockback scaled by attacker STR and absorbed by victim STR poise
-  let kb = (knock + 45) * (1 + a.str * 0.08) / (1 + b.str * 0.04);
+  let kb = (knock + 40) * (1 + a.str * 0.08) / (1 + b.str * 0.06);
   if (isCrit) kb *= 1.2;
 
   b.vx += (dx / l) * kb;
   b.vy += (dy / l) * kb;
 
+  // Vampire Paladin lifesteal: heals on hit
+  if (a.weapon.kind === 'sword' && !isUlt) {
+    let heal = dmg * (0.09 + (a.int || 0) * 0.01);
+    a.hp = Math.min(a.maxHp, a.hp + heal);
+    effects.push({ x: a.x, y: a.y - 18, t: 0.35, max: 0.35, text: '+' + Math.round(heal) + ' HP', color: '#2ea854' });
+  }
+
   // Race special crit procs
   if (isCrit && !isUlt) {
     if (aRace === 'mystic') {
-      b.slow = Math.max(b.slow || 0, 0.8 * (1 + (a.int || 0) * 0.08));
+      b.slow = Math.max(b.slow || 0, 0.45 * (1 + (a.int || 0) * 0.05));
     }
   }
 
@@ -759,14 +785,14 @@ function hit(a, b, rawDamage, knock = 100, isUlt = false) {
   // Defender builds ult from taking damage (INT + STR scaling)
   if (!isUlt) {
     if (a.ultCooldown <= 0) {
-      const dealtRate = 0.65 * (1 + (a.int || 0) * 0.10) * (1 + (a.agi || 0) * 0.05);
+      const dealtRate = 0.65 * (1 + (a.int || 0) * 0.10) * (1 + (a.agi || 0) * 0.06);
       a.ultCharge = Math.min(100, a.ultCharge + dmg * dealtRate);
       if (a.ultCharge >= 100) {
         triggerUltimate(a);
       }
     }
     if (b.ultCooldown <= 0) {
-      const takenRate = 0.55 * (1 + (b.int || 0) * 0.08) * (1 + (b.str || 0) * 0.06);
+      const takenRate = 0.55 * (1 + (b.int || 0) * 0.08) * (1 + (b.str || 0) * 0.07);
       b.ultCharge = Math.min(100, b.ultCharge + dmg * takenRate);
       if (b.ultCharge >= 100) {
         triggerUltimate(b);
@@ -775,18 +801,18 @@ function hit(a, b, rawDamage, knock = 100, isUlt = false) {
   }
 
   // Cactus reflect passive (only on non-ult hits)
-  if (b.weapon.kind === 'saw' && shield > 0 && !isUlt) {
+  if (b.weapon.kind === 'saw' && !isUlt) {
     let refl = dmg * 0.22;
     a.hp = Math.max(0, a.hp - refl);
     effects.push({ x: a.x, y: a.y, t: 0.35, max: 0.35, text: '−' + Math.round(refl), color: '#4b8b42' });
   }
 
   // Eraser low-HP shield passive
-  if (b.weapon.kind === 'sword' && !b.shieldUsed && b.hp > 0 && b.hp < b.maxHp * 0.3) {
+  if (b.weapon.kind === 'sword' && !b.shieldUsed && b.hp > 0 && b.hp < b.maxHp * 0.35) {
     b.shieldUsed = true;
-    b.guard = 2.0;
-    b.hp = Math.min(b.maxHp, b.hp + 20);
-    effects.push({ x: b.x, y: b.y, t: 0.8, max: 0.8, text: '+20 ЩИТ!', color: '#6a9cb3' });
+    b.guard = 0.8;
+    b.hp = Math.min(b.maxHp, b.hp + 9);
+    effects.push({ x: b.x, y: b.y, t: 0.8, max: 0.8, text: '+9 ЩИТ!', color: '#6a9cb3' });
   }
 
   let floatText = '−' + Math.round(dmg);
@@ -850,23 +876,80 @@ function zone(a, kind, x, y, r, life, damage, isUlt = false) {
 
 function special(a, b) {
   const k = a.weapon.kind;
-  const comboFreq = (a.int || 0) >= 6 ? 3 : 4;
+  const comboFreq = (a.int || 0) >= 5 ? 3 : 4;
   if (a.combo % comboFreq !== 0) return false;
   a.specialGlow = 0.8;
 
   const aoeR = base => base * (1 + (a.int || 0) * 0.05);
 
   switch (k) {
+    case 'dagger': {
+      // Теневой Шиноби: Телепорт за спину цели!
+      effects.push({ x: a.x, y: a.y, t: 0.3, max: 0.3, burst: true, color: '#7350b8' });
+      let angle = b.angle || 0;
+      a.x = clamp(b.x - Math.cos(angle) * 44, 35, W - 35);
+      a.y = clamp(b.y - Math.sin(angle) * 44, 45, H - 35);
+      a.angle = Math.atan2(b.y - a.y, b.x - a.x);
+      effects.push({ x: a.x, y: a.y, t: 0.3, max: 0.3, burst: true, color: '#7350b8' });
+      effects.push({ x: a.x, y: a.y - 18, t: 0.5, max: 0.5, text: '⚡ ТЕЛЕПОРТ!', color: '#a07bf0' });
+      hit(a, b, a.weapon.damage * 1.85, 120);
+      break;
+    }
+    case 'axe': {
+      // Магнитный Мясник: Железный Хук (притягивает цель в упор!)
+      let dx = b.x - a.x, dy = b.y - a.y, dist = Math.hypot(dx, dy) || 1;
+      if (dist > 70) {
+        b.x = a.x + (dx / dist) * 50;
+        b.y = a.y + (dy / dist) * 50;
+        b.vx = -(dx / dist) * 160;
+        b.vy = -(dy / dist) * 160;
+        b.slow = 0.5;
+        effects.push({ x: a.x, y: a.y, x2: b.x, y2: b.y, t: 0.35, max: 0.35, lightning: true, color: '#d45132' });
+        effects.push({ x: b.x, y: b.y - 18, t: 0.6, max: 0.6, text: '🧲 ХУК!', color: '#d45132' });
+        hit(a, b, a.weapon.damage * 1.55, 40);
+      }
+      break;
+    }
+    case 'shield': {
+      // Инженер-Строитель: Защитная стена-линейка (блокирует снаряды и путь)
+      let angle = Math.atan2(b.y - a.y, b.x - a.x);
+      let wallX = a.x + Math.cos(angle) * 48;
+      let wallY = a.y + Math.sin(angle) * 48;
+      zone(a, 'barricade', wallX, wallY, aoeR(65), 3.2, a.weapon.damage * 0.6);
+      effects.push({ x: wallX, y: wallY - 18, t: 0.6, max: 0.6, text: '🛡️ СТЕНА!', color: '#277c60' });
+      break;
+    }
+    case 'bow': {
+      // Чернильный Призыватель: Призыв автономного шмеля-миньона!
+      zone(a, 'summon_bee', a.x + rand(-30, 30), a.y + rand(-30, 30), aoeR(115), 3.0, a.weapon.damage * 0.38);
+      effects.push({ x: a.x, y: a.y - 18, t: 0.6, max: 0.6, text: '🐝 ПРИЗЫВ!', color: '#9e6909' });
+      break;
+    }
+    case 'sword': {
+      // Вампир-Ластик: Стирание снарядов и исцеляющий выпад
+      a.hp = Math.min(a.maxHp, a.hp + 5);
+      shots.forEach(s => {
+        if (s.owner !== a && Math.hypot(s.x - a.x, s.y - a.y) < 110) {
+          s.erased = true;
+          s.t = 0;
+          effects.push({ x: s.x, y: s.y, t: 0.3, max: 0.3, burst: true, color: '#c33c70' });
+        }
+      });
+      effects.push({ x: a.x, y: a.y - 18, t: 0.5, max: 0.5, text: '🩸 СТИРАНИЕ!', color: '#c33c70' });
+      hit(a, b, a.weapon.damage * 1.1, 100);
+      break;
+    }
+    case 'fist': {
+      // Стальной Панчер: Оглушающий апперкот
+      b.slow = 0.5;
+      b.vx = 0; b.vy = 0;
+      effects.push({ x: b.x, y: b.y - 20, t: 0.5, max: 0.5, text: '🥊 НОКАУТ!', color: '#d33d46' });
+      hit(a, b, a.weapon.damage * 1.35, 240);
+      break;
+    }
     case 'bomb':
       zone(a, 'popcorn', b.x + b.vx * 0.25, b.y + b.vy * 0.25, aoeR(68), 2.2, a.weapon.damage * 0.95);
-      break;
-    case 'bow':
-      for (const offset of [-0.45, 0, 0.45]) {
-        const s = projectile(a, b, 'bow', offset);
-        s.damage *= 0.38;
-        s.t = 1.65;
-        s.small = true;
-      }
+      effects.push({ x: b.x, y: b.y - 15, t: 0.4, max: 0.4, text: '🍿 МИНА!', color: '#ba850d' });
       break;
     case 'hammer': {
       const z = zone(a, 'landing', b.x + b.vx * 0.18, b.y + b.vy * 0.18, aoeR(78), 0.42, a.weapon.damage * 1.15);
@@ -874,11 +957,8 @@ function special(a, b) {
       break;
     }
     case 'magic':
-      zone(a, 'bubble', b.x + b.vx * 0.2, b.y + b.vy * 0.2, aoeR(62), 1.8, a.weapon.damage * 0.9);
-      break;
-    case 'shield':
-      a.guard = 0.9;
-      zone(a, 'parry', a.x, a.y, aoeR(90), 0.65, a.weapon.damage * 0.85);
+      zone(a, 'bubble', b.x + b.vx * 0.15, b.y + b.vy * 0.15, aoeR(58), 1.6, a.weapon.damage * 0.85);
+      effects.push({ x: a.x, y: a.y - 18, t: 0.4, max: 0.4, text: '🫧 ПУЗЫРЬ!', color: '#008f9b' });
       break;
     case 'saw':
       zone(a, 'spin', a.x, a.y, aoeR(95), 0.7, a.weapon.damage * 0.85);
@@ -887,7 +967,8 @@ function special(a, b) {
       zone(a, 'gravity', b.x, b.y, aoeR(105), 1.0, a.weapon.damage * 0.9);
       break;
     case 'lightning':
-      zone(a, 'storm', b.x + b.vx * 0.15, b.y + b.vy * 0.15, aoeR(66), 0.5, a.weapon.damage * 1.1);
+      zone(a, 'storm', b.x + b.vx * 0.15, b.y + b.vy * 0.15, aoeR(66), 0.5, a.weapon.damage * 1.05);
+      effects.push({ x: a.x, y: a.y - 18, t: 0.4, max: 0.4, text: '⚡ ТЕСЛА!', color: '#e2bd48' });
       break;
   }
   return true;
@@ -918,6 +999,42 @@ function updateZones(dt) {
       z.y = z.owner.y;
     }
 
+    // Barricade wall: deflects/absorbs incoming projectiles and pushes enemies away
+    if (z.kind === 'barricade') {
+      shots.forEach(s => {
+        if (s.owner !== z.owner && Math.hypot(s.x - z.x, s.y - z.y) < z.r) {
+          s.erased = true;
+          s.t = 0;
+          effects.push({ x: s.x, y: s.y, t: 0.3, max: 0.3, burst: true, color: '#7a6546' });
+        }
+      });
+      for (const b of fighters) {
+        if (b.alive && b !== z.owner) {
+          let dx = b.x - z.x, dy = b.y - z.y, d = Math.hypot(dx, dy) || 1;
+          if (d < z.r + 15) {
+            b.vx += (dx / d) * 140 * dt;
+            b.vy += (dy / d) * 140 * dt;
+          }
+        }
+      }
+    }
+
+    // Summon Bee: flies alongside owner and periodically stings nearest enemy!
+    if (z.kind === 'summon_bee') {
+      let dx = z.owner.x - z.x, dy = z.owner.y - z.y;
+      z.x += dx * dt * 2.2;
+      z.y += dy * dt * 2.2;
+      z.stingCooldown = (z.stingCooldown || 0) - dt;
+      if (z.stingCooldown <= 0) {
+        z.stingCooldown = 0.95;
+        const enemy = fighters.find(f => f.alive && f !== z.owner && Math.hypot(f.x - z.x, f.y - z.y) < z.r);
+        if (enemy) {
+          hit(z.owner, enemy, z.damage, 35);
+          effects.push({ x: enemy.x, y: enemy.y - 12, t: 0.35, max: 0.35, text: '🐝 УЖАЛЕН!', color: '#9e6909' });
+        }
+      }
+    }
+
     if (z.kind === 'gravity') {
       for (const b of fighters) {
         if (b.alive && b !== z.owner) {
@@ -933,16 +1050,16 @@ function updateZones(dt) {
     const targets = fighters.filter(b => b.alive && b !== z.owner && Math.hypot(b.x - z.x, b.y - z.y) < z.r);
     const trap = z.kind === 'popcorn' || z.kind === 'bubble';
     const triggered = trap && age > 0.3 && targets.length > 0;
-    const active = z.kind === 'spin' || triggered || (!trap && z.t <= 0);
+    const active = z.kind === 'spin' || triggered || (!trap && z.t <= 0 && z.kind !== 'barricade' && z.kind !== 'summon_bee');
 
     if (active) {
       for (const b of targets) {
         if (z.hit.has(b.id)) continue;
         z.hit.add(b.id);
         hit(z.owner, b, z.damage, z.kind === 'gravity' ? -70 : z.kind === 'landing' ? 230 : 90, z.isUlt || false);
-        if (z.kind === 'bubble') b.slow = 1.5;
+        if (z.kind === 'bubble') b.slow = 0.45;
       }
-      if (z.kind !== 'spin') {
+      if (z.kind !== 'spin' && z.kind !== 'barricade' && z.kind !== 'summon_bee') {
         effects.push({ x: z.x, y: z.y, t: 0.55, max: 0.55, explosion: true, color: z.owner.color, style: z.kind });
         if (z.kind === 'storm') {
           effects.push({ x: z.x - 8, y: Math.max(0, z.y - 130), x2: z.x, y2: z.y, t: 0.3, max: 0.3, lightning: true, color: '#d4ab32' });
@@ -1053,16 +1170,16 @@ function triggerUltimate(f) {
   const enemies = fighters.filter(e => e.alive && e !== f);
 
   switch (k) {
-    case 'sword': // Генеральная зачистка
-      f.hp = Math.min(f.maxHp, f.hp + 20);
+    case 'sword': // Кровавая жатва
+      f.hp = Math.min(f.maxHp, f.hp + 30);
       shots.forEach(s => {
         if (s.owner !== f && Math.hypot(s.x - f.x, s.y - f.y) < 160) s.erased = true;
       });
       enemies.forEach(e => {
         let d = Math.hypot(e.x - f.x, e.y - f.y);
-        if (d < 150) hit(f, e, 16, 260, true);
+        if (d < 150) hit(f, e, 17, 240, true);
       });
-      effects.push({ x: f.x, y: f.y, t: 0.7, max: 0.7, burst: true, color: f.color });
+      effects.push({ x: f.x, y: f.y, t: 0.7, max: 0.7, burst: true, color: '#c33c70' });
       break;
 
     case 'axe': // Магнитный шторм
@@ -1070,7 +1187,7 @@ function triggerUltimate(f) {
         let dx = f.x - e.x, dy = f.y - e.y, d = Math.hypot(dx, dy) || 1;
         e.vx += (dx / d) * 260;
         e.vy += (dy / d) * 260;
-        hit(f, e, 15, -80, true);
+        hit(f, e, 16, -90, true);
       });
       effects.push({ x: f.x, y: f.y, t: 0.8, max: 0.8, explosion: true, color: f.color, style: 'gravity' });
       break;
@@ -1095,30 +1212,28 @@ function triggerUltimate(f) {
       }
       break;
 
-    case 'bow': // Гнев Королевы
-      for (let i = 0; i < 5; i++) {
-        let target = enemies[i % enemies.length] || f;
-        let s = projectile(f, target, 'bow', rand(-0.45, 0.45), true);
-        s.damage = 7;
-        s.small = true;
+    case 'bow': // Рой Королевы
+      for (let i = 0; i < 2; i++) {
+        zone(f, 'summon_bee', f.x + rand(-35, 35), f.y + rand(-35, 35), 140, 7.0, 7.5, true);
       }
+      effects.push({ x: f.x, y: f.y - 25, t: 1.0, max: 1.0, burst: true, color: '#e5b634' });
       break;
 
-    case 'hammer': // Метеоритный дроп
+    case 'hammer': // Апокалиптический дроп
       let cluster = enemies[0] || f;
-      zone(f, 'landing', cluster.x, cluster.y, 120, 0.5, 18, true);
+      zone(f, 'landing', cluster.x, cluster.y, 140, 0.5, 20, true);
       f.leap = { x: f.x, y: f.y, endX: cluster.x, endY: cluster.y, t: 0.5, max: 0.5 };
       break;
 
-    case 'dagger': // Танец грифеля
-      enemies.slice(0, 3).forEach((e, i) => {
+    case 'dagger': // Танец тысячи теней
+      enemies.slice(0, 4).forEach((e, i) => {
         setTimeout(() => {
           if (!f.alive) return;
-          f.x = e.x - 20;
-          f.y = e.y - 20;
-          hit(f, e, 12, 110, true);
-          effects.push({ x: e.x, y: e.y, t: 0.3, max: 0.3, swipe: 'dagger', color: f.color });
-        }, i * 130);
+          f.x = clamp(e.x - 25, 35, W - 35);
+          f.y = clamp(e.y - 25, 45, H - 35);
+          hit(f, e, 14, 130, true);
+          effects.push({ x: e.x, y: e.y, t: 0.3, max: 0.3, burst: true, color: '#7350b8' });
+        }, i * 120);
       });
       break;
 
@@ -1133,17 +1248,22 @@ function triggerUltimate(f) {
       });
       break;
 
-    case 'magic': // Апокалипсис пены
-      for (let i = 0; i < 5; i++) {
+    case 'magic': // Мыльный шторм
+      zone(f, 'spin', f.x, f.y, 120, 2.0, 9, true);
+      for (let i = 0; i < 4; i++) {
         let target = enemies[i % enemies.length] || f;
-        let s = projectile(f, target, 'magic', rand(-0.5, 0.5), true);
-        s.damage = 9;
+        let s = projectile(f, target, 'magic', rand(-0.4, 0.4), true);
+        s.damage = 8;
       }
       break;
 
-    case 'shield': // Ураганный купол
-      f.guard = 2.0;
-      zone(f, 'parry', f.x, f.y, 100, 1.8, 12, true);
+    case 'shield': // Железный Бастион
+      f.guard = 2.5;
+      zone(f, 'barricade', f.x, f.y, 110, 4.0, 14, true);
+      enemies.forEach(e => {
+        let d = Math.hypot(e.x - f.x, e.y - f.y);
+        if (d < 120) hit(f, e, 15, 200, true);
+      });
       break;
 
     case 'fist': // Ураган нокаутов
@@ -1583,6 +1703,143 @@ function handleMessage(player, msg) {
   }
 }
 
-server.listen(PORT, () => {
-  console.log(`Server running on http://localhost:${PORT}`);
-});
+function getLocalIps() {
+  const ips = [];
+  const nets = os.networkInterfaces();
+  for (const name of Object.keys(nets)) {
+    for (const net of nets[name]) {
+      if (net.family === 'IPv4' && !net.internal && !net.address.startsWith('169.254')) {
+        ips.push({ name, address: net.address });
+      }
+    }
+  }
+  return ips;
+}
+
+function simulateDuel(p1, p2, maxSeconds = 60) {
+  const prevFighters = fighters;
+  const prevShots = shots;
+  const prevZones = zones;
+  const prevEffects = effects;
+
+  const role1 = ROLES.find(r => r.id === p1.roleId) || ROLES[0];
+  const role2 = ROLES.find(r => r.id === p2.roleId) || ROLES[0];
+
+  const makeFighter = (role, stats, id, x, y, a) => {
+    const str = (stats && stats.str) || 0;
+    const agi = (stats && stats.agi) || 0;
+    const int = (stats && stats.int) || 0;
+
+    const maxHp = 130 + str * 20;
+    const speedMult = 0.80 + agi * 0.06;
+    const cdMult = 1 / (1 + agi * 0.075);
+    const damageMult = (1 + str * 0.04) * (1 + int * 0.045);
+    const ultRate = 0.85 + int * 0.12;
+    const scale = 0.85 + str * 0.05;
+    const radius = 21 * scale;
+    const dodgeCooldown = 3.8 / (1 + agi * 0.12);
+    const dodgeSpeed = 130 + agi * 15;
+    const dodgeChance = agi * 0.035;
+
+    return {
+      socketId: 'p_' + id,
+      name: role.roleName,
+      id,
+      roleId: role.id,
+      weapon: role,
+      roleName: role.roleName,
+      weaponName: role.weaponName,
+      color: role.color,
+      race: role.race,
+      raceName: role.raceName,
+      raceIcon: role.raceIcon,
+      scale,
+      radius,
+      dodgeCooldown,
+      dodgeSpeed,
+      dodgeChance,
+      x, y,
+      vx: 0, vy: 0,
+      hp: maxHp,
+      maxHp,
+      alive: true,
+      cd: rand(0.1, 0.4),
+      dodge: rand(1.0, 2.5),
+      angle: a,
+      flash: 0,
+      attack: 0,
+      phase: rand(0, 6),
+      kills: 0,
+      guard: 0,
+      slow: 0,
+      combo: 0,
+      specialGlow: 0,
+      leap: null,
+      ultCharge: 0,
+      ultCooldown: 2,
+      ultRate,
+      speedMult,
+      cdMult,
+      damageMult,
+      str, agi, int
+    };
+  };
+
+  fighters = [
+    makeFighter(role1, p1.stats, 0, W / 2 - 120, H / 2, 0),
+    makeFighter(role2, p2.stats, 1, W / 2 + 120, H / 2, Math.PI)
+  ];
+  shots = [];
+  zones = [];
+  effects = [];
+
+  const dt = 0.033;
+  let t = 0;
+  while (t < maxSeconds && fighters[0].alive && fighters[1].alive) {
+    updateCombat(dt);
+    t += dt;
+  }
+
+  let winnerId = -1;
+  if (!fighters[0].alive && fighters[1].alive) winnerId = 1;
+  else if (!fighters[1].alive && fighters[0].alive) winnerId = 0;
+  else winnerId = fighters[0].hp >= fighters[1].hp ? 0 : 1;
+
+  const result = {
+    winner: winnerId,
+    f0Hp: Math.max(0, fighters[0].hp),
+    f1Hp: Math.max(0, fighters[1].hp),
+    duration: t
+  };
+
+  fighters = prevFighters;
+  shots = prevShots;
+  zones = prevZones;
+  effects = prevEffects;
+
+  return result;
+}
+
+if (require.main === module) {
+  server.listen(PORT, '0.0.0.0', () => {
+    const localIps = getLocalIps();
+    console.log(`\n=============================================================`);
+    console.log(`🎮 Битва на карандашах — СЕРВЕР ЗАПУЩЕН!`);
+    console.log(`💻 На этом ПК в браузере: http://localhost:${PORT}`);
+    if (localIps.length > 0) {
+      console.log(`📱 С телефонов и ноутбуков в этой же Wi-Fi/локальной сети:`);
+      localIps.forEach(ip => {
+        console.log(`   👉 http://${ip.address}:${PORT}  (${ip.name})`);
+      });
+    }
+    console.log(`=============================================================\n`);
+  });
+}
+
+module.exports = {
+  app,
+  server,
+  ROLES,
+  RACE_ADVANTAGE,
+  simulateDuel
+};
