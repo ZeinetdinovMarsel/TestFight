@@ -351,10 +351,10 @@ function startTournament() {
   }
   broadcastLobbyState();
 
-  const validPlayers = Array.from(state.players.values()).filter(p => p.name && p.roleId !== null);
+  const validPlayers = Array.from(state.players.values()).filter(p => !p.isSpectator && p.name && p.roleId !== null && (p.ready || p.isAdmin));
   if (validPlayers.length < 2) return;
 
-  // Non-ready or missing role players become spectators
+  // Non-ready, missing role, or spectator players automatically become spectators!
   state.players.forEach(p => {
     if (!validPlayers.includes(p)) p.isSpectator = true;
   });
@@ -1529,6 +1529,7 @@ function resetGame() {
 // WebSocket Connection handling
 wss.on('connection', ws => {
   const socketId = 'p_' + Math.random().toString(36).substr(2, 9);
+  const isSpectatorOnJoin = state.status !== 'LOBBY';
 
   const player = {
     id: socketId,
@@ -1538,18 +1539,21 @@ wss.on('connection', ws => {
     stats: { str: 4, agi: 4, int: 4 },
     ready: false,
     isAdmin: false,
-    isSpectator: state.status !== 'LOBBY'
+    isSpectator: isSpectatorOnJoin
   };
 
   state.players.set(socketId, player);
 
-  // Send initial handshake
+  // Send initial handshake with complete spectator and match status
   sendTo(ws, {
     type: 'handshake',
     socketId,
     roles: ROLES,
     status: state.status,
-    roundDuration: state.roundDuration
+    isSpectator: isSpectatorOnJoin,
+    roundDuration: state.roundDuration,
+    currentRound: state.currentRound,
+    totalRounds: state.totalRounds
   });
 
   broadcastLobbyState();
@@ -1614,13 +1618,13 @@ function handleMessage(player, msg) {
         player.name = cleanName;
       }
 
-      // Role reservation check (unique per player)
-      if (typeof msg.roleId === 'number' && msg.roleId >= 0 && msg.roleId < ROLES.length) {
+      // Role reservation check (unique per player; spectators cannot hold roles)
+      if (!player.isSpectator && typeof msg.roleId === 'number' && msg.roleId >= 0 && msg.roleId < ROLES.length) {
         const taken = Array.from(state.players.values()).some(p => p.id !== player.id && p.roleId === msg.roleId);
         if (!taken) {
           player.roleId = msg.roleId;
         }
-      } else if (msg.roleId === null) {
+      } else if (msg.roleId === null || player.isSpectator) {
         player.roleId = null;
       }
 
@@ -1638,8 +1642,21 @@ function handleMessage(player, msg) {
       break;
     }
 
+    case 'toggle_spectator': {
+      if (state.status !== 'LOBBY') return;
+      player.isSpectator = Boolean(msg.isSpectator);
+      if (player.isSpectator) {
+        player.roleId = null;
+        player.ready = false;
+      }
+      checkAutoStart();
+      broadcastLobbyState();
+      break;
+    }
+
     case 'toggle_ready': {
       if (state.status !== 'LOBBY') return;
+      if (player.isSpectator) return;
       if (!player.name || player.roleId === null) return;
       player.ready = !player.ready;
       checkAutoStart();

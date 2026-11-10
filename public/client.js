@@ -12,6 +12,7 @@
   let isAdmin = false;
   let isReady = false;
   let isKicked = false;
+  let isSpectator = false;
   let lastRosterPlayers = [];
 
   // Render State
@@ -181,6 +182,19 @@
       case 'handshake':
         socketId = msg.socketId;
         roles = msg.roles;
+        currentStatus = msg.status;
+        if (msg.isSpectator || (msg.status && msg.status !== 'LOBBY')) {
+          isSpectator = true;
+          showArenaView();
+          if ($('spectatorBadge')) $('spectatorBadge').classList.remove('hidden');
+          currentRound = msg.currentRound || 1;
+          totalRounds = msg.totalRounds || 1;
+          $('roundBadge').textContent = getRoundTitle(currentRound, totalRounds);
+        } else {
+          isSpectator = false;
+          if ($('spectatorBadge')) $('spectatorBadge').classList.add('hidden');
+        }
+        updateSpectatorUI();
         renderRoleCards();
         break;
 
@@ -197,8 +211,11 @@
 
       case 'reset_to_lobby':
         isReady = false;
-        $('btnReady').textContent = '⚔ Я ГОТОВ К БИТВЕ ↗';
+        isSpectator = false;
+        $('btnReady').textContent = '⚔ ГОТОВ';
         $('btnReady').classList.remove('ready-active');
+        if ($('spectatorBadge')) $('spectatorBadge').classList.add('hidden');
+        updateSpectatorUI();
         fighters = [];
         shots = [];
         zones = [];
@@ -220,6 +237,13 @@
           roles = msg.roles;
           updateRolesTakenStatus();
         }
+        if (msg.players) {
+          const me = msg.players.find(p => p.id === socketId);
+          if (me) {
+            isSpectator = Boolean(me.isSpectator);
+            updateSpectatorUI();
+          }
+        }
         updateLobbyRoster(msg.players);
         updateLobbyUI(msg);
         break;
@@ -231,6 +255,11 @@
         currentRound = msg.round;
         totalRounds = msg.totalRounds;
         $('roundBadge').textContent = getRoundTitle(msg.round, totalRounds);
+        if (isSpectator && $('spectatorBadge')) {
+          $('spectatorBadge').classList.remove('hidden');
+        } else if (!isSpectator && $('spectatorBadge')) {
+          $('spectatorBadge').classList.add('hidden');
+        }
         showCountdownOverlay(3);
         break;
 
@@ -253,13 +282,13 @@
         zones = msg.zones;
         effects = msg.effects;
 
-        // Hit Impact detection from HP delta & effect inspection
+        // Hit Impact detection from HP delta & effect inspection (subtle, non-dizzying shake)
         if (fighters) {
           fighters.forEach(f => {
             let prevHp = lastFighterHp.get(f.id);
             if (prevHp !== undefined && f.hp < prevHp) {
               let dmg = prevHp - f.hp;
-              triggerScreenShake(Math.min(9, 2 + dmg * 0.35));
+              triggerScreenShake(Math.min(4.0, 1.0 + dmg * 0.15));
               emitHitSparks(f.x, f.y, f.color, dmg > 14);
             }
             lastFighterHp.set(f.id, f.hp);
@@ -268,10 +297,10 @@
         if (effects) {
           effects.forEach(e => {
             if (e.isUlt) {
-              triggerScreenShake(14);
+              triggerScreenShake(6.5);
               if (Math.random() < 0.25) emitUltBurst(e.x, e.y, e.color);
             } else if (e.burst || e.explosion) {
-              triggerScreenShake(6);
+              triggerScreenShake(2.5);
             }
           });
         }
@@ -421,12 +450,40 @@
   }
 
   function selectRole(roleId) {
+    if (isSpectator) {
+      alert('Вы находитесь в режиме зрителя! Нажмите "Хочу участвовать в битве", чтобы выбрать бойца.');
+      return;
+    }
     myRole = roleId;
     document.querySelectorAll('.role-card').forEach(c => c.classList.remove('selected'));
     const active = $(`role-card-${roleId}`);
     if (active) active.classList.add('selected');
 
     sendProfile();
+  }
+
+  function updateSpectatorUI() {
+    const btn = $('btnToggleSpectator');
+    const btnReady = $('btnReady');
+    if (!btn) return;
+
+    if (isSpectator) {
+      btn.textContent = '⚔️ Хочу участвовать в битве!';
+      btn.classList.add('ready-active');
+      if (btnReady) {
+        btnReady.disabled = true;
+        btnReady.textContent = '👁️ Вы наблюдатель';
+        btnReady.style.opacity = '0.5';
+      }
+    } else {
+      btn.textContent = '👁️ Режим наблюдения (Смотреть)';
+      btn.classList.remove('ready-active');
+      if (btnReady) {
+        btnReady.disabled = false;
+        btnReady.style.opacity = '1';
+        btnReady.textContent = isReady ? '✓ ГОТОВ (ОТМЕНА)' : '⚔ ГОТОВ';
+      }
+    }
   }
 
   function updateRolesTakenStatus() {
@@ -465,28 +522,38 @@
       const item = document.createElement('div');
       item.className = 'roster-item';
 
-      const roleObj = roles.find(r => r.id === p.roleId);
-      const raceIcon = roleObj ? (roleObj.raceIcon || (roleObj.race === 'titan' ? '🛡️' : roleObj.race === 'shadow' ? '⚡' : '🔮')) : '';
-      const roleStr = roleObj ? `${raceIcon} ${roleObj.roleName} (${roleObj.weaponName})` : 'Выбирает...';
-      const statsStr = p.stats ? `СИЛ:${p.stats.str} ЛОВ:${p.stats.agi} ИНТ:${p.stats.int}` : '';
+      let roleStr = '';
+      let statsStr = '';
+      let statusHtml = '';
+
+      if (p.isSpectator) {
+        roleStr = '👁️ Смотрит с трибун (Наблюдатель)';
+        statusHtml = `<span class="roster-status" style="background:#eef2ff; color:#3730a3; border:1px solid #c7d2fe;">👁️ Зритель</span>`;
+      } else {
+        const roleObj = roles.find(r => r.id === p.roleId);
+        const raceIcon = roleObj ? (roleObj.raceIcon || (roleObj.race === 'titan' ? '🛡️' : roleObj.race === 'shadow' ? '⚡' : '🔮')) : '';
+        roleStr = roleObj ? `${raceIcon} ${roleObj.roleName} (${roleObj.weaponName})` : 'Выбирает...';
+        statsStr = p.stats ? `СИЛ:${p.stats.str} ЛОВ:${p.stats.agi} ИНТ:${p.stats.int}` : '';
+        statusHtml = `<span class="roster-status ${p.ready ? 'ready' : 'waiting'}">${p.ready ? '✓ Готов' : '⏳ Ждёт'}</span>`;
+      }
 
       item.innerHTML = `
         <div class="roster-item-info">
           <b>${p.name || 'Аноним'} ${p.isAdmin ? '★' : ''} ${p.id === socketId ? '(Вы)' : ''}</b>
           <span>${roleStr}</span>
-          <span style="font-size:10px; color:#888; display:block;">${statsStr}</span>
+          ${statsStr ? `<span style="font-size:10px; color:#888; display:block;">${statsStr}</span>` : ''}
         </div>
         <div style="display:flex; align-items:center; gap:8px;">
-          <span class="roster-status ${p.ready ? 'ready' : 'waiting'}">
-            ${p.ready ? '✓ Готов' : '⏳ Ждёт'}
-          </span>
+          ${statusHtml}
           ${isAdmin && p.id !== socketId ? `<button type="button" class="btn-kick" onclick="window.kickPlayer('${p.id}')">Выгнать</button>` : ''}
         </div>
       `;
       list.appendChild(item);
     });
 
-    $('lobbyCount').textContent = `${lastRosterPlayers.length} / 15`;
+    const activeCount = lastRosterPlayers.filter(p => !p.isSpectator).length;
+    const specCount = lastRosterPlayers.filter(p => p.isSpectator).length;
+    $('lobbyCount').textContent = specCount > 0 ? `${activeCount}/15 · 👁️ ${specCount}` : `${activeCount} / 15`;
     renderAdminPlayerList(lastRosterPlayers);
   }
 
@@ -598,6 +665,7 @@
 
   // Ready Toggle
   $('btnReady').onclick = () => {
+    if (isSpectator) return;
     myName = $('inputName').value.trim();
     if (!myName) {
       alert('Введите ваше имя!');
@@ -618,6 +686,20 @@
       $('btnReady').classList.remove('ready-active');
     }
   };
+
+  const btnToggleSpec = $('btnToggleSpectator');
+  if (btnToggleSpec) {
+    btnToggleSpec.onclick = () => {
+      isSpectator = !isSpectator;
+      if (isSpectator) {
+        myRole = null;
+        isReady = false;
+        document.querySelectorAll('.role-card').forEach(c => c.classList.remove('selected'));
+      }
+      send({ type: 'toggle_spectator', isSpectator });
+      updateSpectatorUI();
+    };
+  }
 
   if ($('btnServerConfig')) {
     $('btnServerConfig').onclick = () => {
@@ -1102,15 +1184,15 @@
     // Hit Impact Recoil Jitter & Translation
     let recoilX = 0, recoilY = 0;
     if (hitIntensity > 0) {
-      recoilX = (Math.sin(now * 55 + f.id) * 7) * hitIntensity;
-      recoilY = (Math.cos(now * 50 + f.id) * 5) * hitIntensity;
+      recoilX = (Math.sin(now * 55 + f.id) * 3.5) * hitIntensity;
+      recoilY = (Math.cos(now * 50 + f.id) * 2.5) * hitIntensity;
     }
     ctx.translate(f.x + recoilX, f.y - jump + recoilY);
     ctx.rotate(Math.sin((f.phase || 0) * 5) * 0.075);
 
     // Rubbery Squash & Stretch on Hit Impact!
     if (hitIntensity > 0) {
-      ctx.scale(scale * (1 + hitIntensity * 0.32), scale * (1 - hitIntensity * 0.24));
+      ctx.scale(scale * (1 + hitIntensity * 0.18), scale * (1 - hitIntensity * 0.14));
     } else {
       ctx.scale(scale, scale);
     }
@@ -1804,12 +1886,12 @@
     ctx.clearRect(0, 0, W, H);
 
     ctx.save();
-    // Сочный Screen Shake при ударах и ультах
+    // Сочный Screen Shake при ударах и ультах (смягчённый)
     if (screenShake > 0.2) {
-      let ox = (Math.random() - 0.5) * screenShake * 2;
-      let oy = (Math.random() - 0.5) * screenShake * 2;
+      let ox = (Math.random() - 0.5) * screenShake * 0.85;
+      let oy = (Math.random() - 0.5) * screenShake * 0.85;
       ctx.translate(ox, oy);
-      screenShake *= 0.88;
+      screenShake *= 0.80;
     } else {
       screenShake = 0;
     }
@@ -1823,6 +1905,15 @@
     });
     updateAndDrawParticles(dt);
     drawEffects();
+
+    if (isSpectator) {
+      ctx.save();
+      ctx.font = 'bold 13px "Comic Sans MS", cursive';
+      ctx.textAlign = 'right';
+      ctx.fillStyle = 'rgba(74, 53, 35, 0.75)';
+      ctx.fillText('👁️ ТРАНСЛЯЦИЯ (РЕЖИМ ЗРИТЕЛЯ)', W - 18, 26);
+      ctx.restore();
+    }
 
     ctx.restore();
 
